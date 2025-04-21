@@ -1,0 +1,15 @@
+{
+  "steps_per_mm": 80,
+  "speed": 1000,
+  "speed_up": 4000.0,
+  "speed_down": 4000.0,
+  "pen_up_angle": 100.0,
+  "pen_down_angle": 60.0,
+  "pen_up_delay": 150,
+  "pen_down_delay": 150,
+  "paper_size": "A4",
+  "bounds": {
+    "width": 297,
+    "height": 210
+  }
+}

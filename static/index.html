@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AxiDraw v3 Control Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-size: 12px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #e0e0e0;
+            font-size: 18px;
+        }
+        .shutdown-button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        .shutdown-button:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            background-color: #333333;
+        }
+        .nav-links a:hover {
+            background-color: #404040;
+        }
+        .nav-links a.active {
+            background-color: #2c5282;
+            color: white;
+        }
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-width: 100%;
+        }
+        .top-section {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .status-container {
+            width: 200px;
+            flex-shrink: 0;
+        }
+        .console-container {
+            flex-grow: 1;
+        }
+        .panel { 
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 5px;
+        }
+        .panel h2 {
+            margin: auto;
+            padding-bottom: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+        .console-window {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            border-radius: 8px;
+            height: 280px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            border: 1px solid #404040;
+        }
+        .console-line {
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+        .console-command {
+            color: #4ec9b0;
+        }
+        .console-response {
+            color: #ce9178;
+        }
+        .console-error {
+            color: #f14c4c;
+        }
+        .console-info {
+            color: #9cdcfe;
+        }
+        .console-warning {
+            color: #dcdcaa;
+        }
+        .movement-section {
+            width: 100%;
+            /* margin-bottom: 10px; */
+        }
+        .movement-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .position-controls {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+        .position-controls .form-group {
+            flex: 1;
+        }
+        .button-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            width: 100%;
+        }
+        .left-buttons, .right-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .copy-pos-btn {
+            background-color: #2c5282;
+        }
+        .copy-pos-btn:hover {
+            background-color: #2b6cb0;
+        }
+        .settings-section {
+            width: 100%;
+            /* margin-bottom: 20px; */
+        }
+        .canvas-section {
+            width: 100%;
+        }
+        .canvas-container {
+            /* background: #333333; */
+            padding: 20px;
+            /* border-radius: 8px; */
+            /* box-shadow: 0 2px 4px rgba(0,0,0,0.2); */
+            position: relative;
+            /* border: 1px solid #404040; */
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #drawingCanvas {
+            width: 100%;
+            height: auto;
+            margin: 0;
+            display: block;
+            border: 1px solid #404040;
+            background: #333333;
+            cursor: crosshair;
+            box-sizing: border-box;
+        }
+        .canvas-dimensions {
+            position: absolute;
+            pointer-events: none;
+            color: #888888;
+            font-size: 11px;
+        }
+        .dimension-x {
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .dimension-y {
+            top: 50%;
+            left: 2px;
+            transform: translateY(-50%) rotate(-90deg);
+            transform-origin: left center;
+        }
+        .tick-marks {
+            position: absolute;
+            pointer-events: none;
+            color: #888888;
+            font-size: 10px;
+        }
+        .tick-x {
+            bottom: 5px;
+            transform: translateX(-50%);
+        }
+        .tick-y {
+            left: 5px;
+            transform: translateY(-50%);
+        }
+        .status-item {
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #404040;
+            font-size: 12px;
+        }
+        .status-label {
+            font-weight: 500;
+            color: #a0aec0;
+        }
+        .status-value {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: #333333;
+            margin-left: 5px;
+            color: #e0e0e0;
+        }
+        .connected {
+            color: #27ae60;
+            background-color: #e8f5e9;
+        }
+        .disconnected {
+            color: #e74c3c;
+            background-color: #fde8e8;
+        }
+        .error {
+            color: #e74c3c;
+            background-color: #fde8e8;
+        }
+        .pen-up {
+            color: #3498db;
+            background-color: #e3f2fd;
+        }
+        .pen-down {
+            color: #e67e22;
+            background-color: #fff3e0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .canvas-controls {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .color-legend {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            font-size: 13px;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .success {
+            background-color: #2ecc71;
+        }
+        .error {
+            background-color: #e74c3c;
+        }
+        .warning {
+            background-color: #f39c12;
+        }
+        .info {
+            background-color: #3498db;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .button-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+        .button-row button {
+            flex: 1;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .settings-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .reset-button {
+            background-color: #e74c3c;
+        }
+        .reset-button:hover {
+            background-color: #c0392b;
+        }
+        input, select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 12px;
+            background-color: #333333;
+            color: #e0e0e0;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+        }
+        button {
+            background-color: #2c5282;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+        button:hover {
+            background-color: #2b6cb0;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        .bezier-section {
+            margin-top: 20px;
+        }
+        .bezier-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .bezier-preview {
+            flex: 1;
+            max-width: 300px;
+        }
+        .bezier-settings {
+            flex: 1;
+        }
+        #bezierPreviewCanvas {
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: crosshair;
+            width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .bezier-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        #toggleJaggedBtn.active {
+            background-color: #FF5722;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="shutdown-button" onclick="shutdownServer()" title="Shutdown Server">✕</button>
+            <h1>AxiDraw v3</h1>
+            <div class="nav-links">
+                <a href="index.html" class="active">Control Panel</a>
+                <a href="osm_download.html">OSM to SVG</a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="top-section">
+                <div class="status-container">
+                    <div class="panel">
+                        <h2>Status</h2>
+                        <div class="status-item">
+                            <span class="status-label">Connection:</span>
+                            <span id="connection-status" class="status-value">Checking...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Pos:</span>
+                            <span id="current-position" class="status-value">X: 0.00mm, Y: 0.00mm</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Pen State:</span>
+                            <span id="pen-state-display" class="status-value">Up</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Motors State:</span>
+                            <span id="motors-state-display" class="status-value">Off</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Current Speed:</span>
+                            <span id="speed-display" class="status-value">1000 mm/min</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Paper Size:</span>
+                            <span id="paper-size-display" class="status-value">A4</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Steps per mm:</span>
+                            <span id="steps-per-mm-display" class="status-value">100 steps/mm</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Pen Up Angle:</span>
+                            <span id="pen-up-angle-display" class="status-value">100°</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Pen Down Angle:</span>
+                            <span id="pen-down-angle-display" class="status-value">60°</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Pen Up Delay:</span>
+                            <span id="pen-up-delay-display" class="status-value">150 ms</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Pen Down Delay:</span>
+                            <span id="pen-down-delay-display" class="status-value">150 ms</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="console-container">
+                    <div class="panel">
+                        <h2>Console</h2>
+                        <div class="console-window" id="console-output">
+                            <div class="console-line console-info">AxiDraw Control Interface initialized</div>
+                            <div class="console-line console-info">Waiting for commands...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="movement-section">
+                <div class="panel">
+                    <h2>Movement Controls</h2>
+                    <div class="movement-controls">
+                        <!-- First row: Input controls -->
+                        <div class="position-controls">
+                            <div class="form-group">
+                                <label for="x">X Pos. (mm):</label>
+                                <input type="number" id="x" value="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="y">Y Pos. (mm):</label>
+                                <input type="number" id="y" value="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="pen-up">Pen State:</label>
+                                <select id="pen-up">
+                                    <option value="true">Up</option>
+                                    <option value="false">Down</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Second row: Action buttons -->
+                        <div class="button-controls">
+                            <div class="left-buttons">
+                                <button onclick="toggleMotors()">Toggle Motors</button>
+                                <button onclick="homeMachine()">Home</button>
+                            </div>
+                            <div class="right-buttons">
+                                <button onclick="copyCurrentPosition()" class="copy-pos-btn">Copy Position</button>
+                                <button onclick="togglePen()">Toggle Pen</button>
+                                <button onclick="moveToPosition()">Move</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="canvas-section">
+                <div class="panel">
+                    <h2>Drawing Canvas</h2>
+                    <div class="canvas-container">
+                        <canvas id="drawingCanvas" width="300" height="210"></canvas>
+                    </div>
+                    <div class="canvas-controls">
+                        <button onclick="clearCanvas()">Clear Canvas</button>
+                        <button onclick="sendDrawingToAxiDraw()">Send to AxiDraw</button>
+                        <button onclick="toggleBezierMode()" id="bezierModeBtn">Bezier Mode</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bezier Drawing Component -->
+            <div class="bezier-section" id="bezierSection" style="display: none;">
+                <div class="panel">
+                    <h2>Bezier Drawing</h2>
+                    <div class="bezier-container">
+                        <div class="bezier-preview">
+                            <canvas id="bezierPreviewCanvas" width="200" height="200"></canvas>
+                            <div class="bezier-controls">
+                                <button onclick="clearBezierCanvas()">Clear</button>
+                                <button onclick="executeBezierPath()">Execute</button>
+                                <button onclick="toggleJaggedPattern()" id="toggleJaggedBtn">Jagged Pattern</button>
+                            </div>
+                        </div>
+                        <div class="bezier-settings">
+                            <div class="form-group">
+                                <label for="jaggedAmplitude">Jagged Amplitude (mm):</label>
+                                <input type="number" id="jaggedAmplitude" value="5" min="1" max="20">
+                            </div>
+                            <div class="form-group">
+                                <label for="jaggedFrequency">Jagged Frequency (mm):</label>
+                                <input type="number" id="jaggedFrequency" value="10" min="5" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="minControlPoints">Min Control Points:</label>
+                                <input type="number" id="minControlPoints" value="5" min="3" max="20">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="panel">
+                    <h2>Settings</h2>
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="paper-size">Paper Size:</label>
+                            <select id="paper-size">
+                                <option value="A4">A4 (297x210mm)</option>
+                                <option value="A5">A5 (210x148mm)</option>
+                                <option value="A6">A6 (148x105mm)</option>
+                                <option value="A7">A7 (105x74mm)</option>
+                                <option value="A8">A8 (74x52mm)</option>
+                                <option value="LETTER">Letter (279.4x215.9mm)</option>
+                                <option value="HALF_LETTER">Half Letter (215.9x139.7mm)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="steps-per-mm">Steps per mm:</label>
+                            <input type="number" id="steps-per-mm" value="80" min="1" max="1000">
+                        </div>
+                        <!-- <div class="form-group">
+                            <label for="settings-speed">Speed (mm/min):</label>
+                            <input type="number" id="settings-speed" value="1000" min="100" max="10000">
+                        </div> -->
+                        <div class="form-group">
+                            <label for="speed-up">Pen Up Speed (mm/min):</label>
+                            <input type="number" id="speed-up" value="4000" min="100" max="10000">
+                        </div>
+                        <div class="form-group">
+                            <label for="speed-down">Pen Down Speed (mm/min):</label>
+                            <input type="number" id="speed-down" value="4000" min="100" max="10000">
+                        </div>
+                        <div class="form-group">
+                            <label for="pen-up-angle">Pen Up Angle (°):</label>
+                            <input type="number" id="pen-up-angle" value="100" min="0" max="180">
+                        </div>
+                        <div class="form-group">
+                            <label for="pen-down-angle">Pen Down Angle (°):</label>
+                            <input type="number" id="pen-down-angle" value="60" min="0" max="180">
+                        </div>
+                        <div class="form-group">
+                            <label for="pen-up-delay">Pen Up Delay (ms):</label>
+                            <input type="number" id="pen-up-delay" value="150" min="0" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="pen-down-delay">Pen Down Delay (ms):</label>
+                            <input type="number" id="pen-down-delay" value="150" min="0" max="1000">
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="reset-button" onclick="resetSettings()">Reset to Defaults</button>
+                        <button onclick="updateSettings()">Update Settings</button>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 11px; color: #e74c3c;">
+                        Warning: Changing settings during movement may cause unexpected behavior.
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Canvas setup
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasAxes = document.getElementById('canvasAxes');
+        let isDrawing = false;
+        let currentStroke = [];
+        let strokes = [];
+        let plottedStrokes = new Set();
+        let currentPlottingStroke = null;
+        let currentPlottingPoint = 0;
+        let plotterPath = [];
+        let lastPlotterPosition = null;
+
+        // AxiDraw v3 bed size (in mm)
+        const BED_WIDTH = 300;
+        const BED_HEIGHT = 210;
+
+        // Canvas scaling factor for higher resolution (4x for better DPI)
+        const CANVAS_SCALE = 4;
+
+        // Update grid line widths and point sizes to account for higher DPI
+        const GRID_LINE_WIDTH = 0.5 * CANVAS_SCALE;
+        const UNPLOTTED_COLOR = '#007bff';
+        const UNPLOTTED_WIDTH = 0.5 * CANVAS_SCALE;
+        const PLOTTED_COLOR = '#28a745';
+        const PLOTTED_WIDTH = 1 * CANVAS_SCALE;
+        const POINT_RADIUS = 3 * CANVAS_SCALE;
+        const PLOTTER_HEAD_COLOR = '#ad0000';
+
+        // Set canvas size to match bed size with scaling
+        canvas.width = BED_WIDTH * CANVAS_SCALE;
+        canvas.height = BED_HEIGHT * CANVAS_SCALE;
+
+        // Set CSS size to maintain display size
+        canvas.style.width = `${BED_WIDTH}px`;
+        canvas.style.height = `${BED_HEIGHT}px`;
+
+        // Initialize canvas with higher resolution settings
+        ctx.scale(CANVAS_SCALE, CANVAS_SCALE);
+
+        // Function to convert canvas coordinates to plotter coordinates
+        function canvasToPlotterCoords(point) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = BED_WIDTH / rect.width;
+            const scaleY = BED_HEIGHT / rect.height;
+            return {
+                x: point.x * scaleX,
+                y: point.y * scaleY
+            };
+        }
+
+        // Function to convert plotter coordinates to canvas coordinates
+        function plotterToCanvasCoords(point) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = rect.width / BED_WIDTH;
+            const scaleY = rect.height / BED_HEIGHT;
+            return {
+                x: point.x * scaleX,
+                y: point.y * scaleY
+            };
+        }
+
+        // Update getCanvasPoint to handle the new scaling
+        function getCanvasPoint(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = BED_WIDTH / rect.width;
+            const scaleY = BED_HEIGHT / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        // Update drawGrid for higher DPI
+        function drawGrid() {
+            const ctx = canvas.getContext('2d');
+            const gridSize = 12.5; // 10mm grid
+            
+            ctx.save();
+            ctx.scale(1/CANVAS_SCALE, 1/CANVAS_SCALE);
+            
+            // Set grid style with scaled line width
+            ctx.strokeStyle = '#555555';
+            ctx.lineWidth = GRID_LINE_WIDTH;
+            
+            // Draw vertical lines
+            for (let x = 0; x <= canvas.width; x += gridSize * CANVAS_SCALE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Draw horizontal lines
+            for (let y = 0; y <= canvas.height; y += gridSize * CANVAS_SCALE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+
+        // Update drawPlotterPath for higher DPI
+        function drawPlotterPath() {
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.scale(1/CANVAS_SCALE, 1/CANVAS_SCALE);
+            
+            // Draw the path segments
+            for (let i = 1; i < plotterPath.length; i++) {
+                const prev = plotterToCanvasCoords(plotterPath[i-1]);
+                const curr = plotterToCanvasCoords(plotterPath[i]);
+                
+                ctx.beginPath();
+                ctx.moveTo(prev.x * CANVAS_SCALE, prev.y * CANVAS_SCALE);
+                ctx.lineTo(curr.x * CANVAS_SCALE, curr.y * CANVAS_SCALE);
+                
+                if (curr.penUp) {
+                    ctx.strokeStyle = UNPLOTTED_COLOR;
+                    ctx.lineWidth = UNPLOTTED_WIDTH;
+                } else {
+                    ctx.strokeStyle = PLOTTED_COLOR;
+                    ctx.lineWidth = PLOTTED_WIDTH;
+                }
+                
+                ctx.stroke();
+            }
+            
+            // Draw the current plotter position
+            if (lastPlotterPosition) {
+                const pos = plotterToCanvasCoords(lastPlotterPosition);
+                ctx.beginPath();
+                ctx.arc(pos.x * CANVAS_SCALE, pos.y * CANVAS_SCALE, POINT_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = PLOTTER_HEAD_COLOR;
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+
+        // Update redrawCanvas for higher DPI
+        function redrawCanvas() {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw the grid first
+            drawGrid();
+            
+            ctx.save();
+            ctx.scale(1/CANVAS_SCALE, 1/CANVAS_SCALE);
+            
+            // Draw all stored strokes with scaled line widths
+            strokes.forEach(stroke => {
+                if (Array.isArray(stroke)) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = UNPLOTTED_COLOR;
+                    ctx.lineWidth = UNPLOTTED_WIDTH;
+                    
+                    stroke.forEach((point, index) => {
+                        const scaledPoint = plotterToCanvasCoords(point);
+                        if (index === 0) {
+                            ctx.moveTo(scaledPoint.x * CANVAS_SCALE, scaledPoint.y * CANVAS_SCALE);
+                        } else {
+                            ctx.lineTo(scaledPoint.x * CANVAS_SCALE, scaledPoint.y * CANVAS_SCALE);
+                        }
+                    });
+                    
+                    ctx.stroke();
+                } else if (stroke.points) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = stroke.color || UNPLOTTED_COLOR;
+                    ctx.lineWidth = (stroke.width || 1) * CANVAS_SCALE;
+                    
+                    stroke.points.forEach((point, index) => {
+                        const scaledPoint = plotterToCanvasCoords(point);
+                        if (index === 0) {
+                            ctx.moveTo(scaledPoint.x * CANVAS_SCALE, scaledPoint.y * CANVAS_SCALE);
+                        } else {
+                            ctx.lineTo(scaledPoint.x * CANVAS_SCALE, scaledPoint.y * CANVAS_SCALE);
+                        }
+                    });
+                    
+                    ctx.stroke();
+                }
+            });
+            
+            ctx.restore();
+            
+            // Draw the plotter path on top
+            drawPlotterPath();
+            
+            // Draw the current stroke if we're drawing
+            if (isDrawing && currentStroke) {
+                ctx.save();
+                ctx.scale(1/CANVAS_SCALE, 1/CANVAS_SCALE);
+                
+                ctx.beginPath();
+                ctx.strokeStyle = UNPLOTTED_COLOR;
+                ctx.lineWidth = UNPLOTTED_WIDTH;
+                
+                if (Array.isArray(currentStroke)) {
+                    currentStroke.forEach((point, index) => {
+                        const scaledPoint = plotterToCanvasCoords(point);
+                        if (index === 0) {
+                            ctx.moveTo(scaledPoint.x * CANVAS_SCALE, scaledPoint.y * CANVAS_SCALE);
+                        } else {
+                            ctx.lineTo(scaledPoint.x * CANVAS_SCALE, scaledPoint.y * CANVAS_SCALE);
+                        }
+                    });
+                }
+                
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function clearCanvas() {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            strokes = [];
+            plottedStrokes.clear();
+            currentPlottingStroke = null;
+            currentPlottingPoint = 0;
+            plotterPath = [];  // Clear plotter path history
+            lastPlotterPosition = null;  // Reset last position
+            
+            // Redraw the grid and axes
+            drawGrid();
+            
+            showNotification('Canvas cleared', 'success');
+            addConsoleLine('Canvas cleared', 'info');
+        }
+
+        async function sendDrawingToAxiDraw() {
+            if (strokes.length === 0) {
+                showNotification('No strokes to send!', 'warning');
+                addConsoleLine('No strokes to send', 'warning');
+                return;
+            }
+
+            try {
+                showNotification('Sending drawing to AxiDraw...', 'info');
+                addConsoleLine('Sending drawing to AxiDraw...', 'command');
+                
+                // Get speed from settings
+                const speedDown = parseFloat(document.getElementById('speed-down').value);
+                const MIN_DISTANCE = 0.5; // Minimum distance between points in mm
+                
+                // Process each stroke
+                for (let i = 0; i < strokes.length; i++) {
+                    const stroke = strokes[i];
+                    currentPlottingStroke = i;
+                    
+                    // Convert stroke to points array and optimize
+                    let points;
+                    if (Array.isArray(stroke)) {
+                        points = optimizePoints(stroke, MIN_DISTANCE);
+                    } else if (stroke.points) {
+                        points = optimizePoints(stroke.points, MIN_DISTANCE);
+                    }
+                    
+                    if (!points || points.length === 0) continue;
+                    
+                    // Calculate durations for each point based on distance and speed
+                    const optimizedPoints = points.map((point, index) => {
+                        if (index === 0) return point; // First point doesn't need duration
+                        
+                        const prevPoint = points[index - 1];
+                        const distance = Math.sqrt(
+                            Math.pow(point.x - prevPoint.x, 2) + 
+                            Math.pow(point.y - prevPoint.y, 2)
+                        );
+                        
+                        // Calculate duration in milliseconds
+                        // Speed is in mm/min, so convert to mm/ms and then to ms
+                        const duration = Math.max(100, Math.ceil((distance / (speedDown / 60)) * 1000));
+                        
+                        return {
+                            ...point,
+                            duration: duration
+                        };
+                    });
+                    
+                    // Send the stroke to the AxiDraw
+                    const response = await fetch('/move', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            points: optimizedPoints,
+                            pen_up: false,
+                            speed: speedDown
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Failed to send stroke to AxiDraw');
+                    }
+
+                    // Mark stroke as plotted
+                    plottedStrokes.add(i);
+                    addConsoleLine(`Stroke ${i + 1}/${strokes.length} completed`, 'info');
+                }
+
+                currentPlottingStroke = null;
+                redrawCanvas();
+                showNotification('Drawing sent to AxiDraw successfully!', 'success');
+                addConsoleLine('Drawing completed successfully', 'success');
+            } catch (error) {
+                console.error('Error sending drawing to AxiDraw:', error);
+                addConsoleLine(`Error: ${error.message}`, 'error');
+                showNotification('Failed to send drawing to AxiDraw', 'error');
+                currentPlottingStroke = null;
+            }
+        }
+
+        // Helper function to optimize points by merging close ones
+        function optimizePoints(points, minDistance) {
+            if (points.length <= 1) return points;
+            
+            const optimized = [points[0]];
+            let lastPoint = points[0];
+            
+            for (let i = 1; i < points.length; i++) {
+                const currentPoint = points[i];
+                const distance = Math.sqrt(
+                    Math.pow(currentPoint.x - lastPoint.x, 2) + 
+                    Math.pow(currentPoint.y - lastPoint.y, 2)
+                );
+                
+                // Only add point if it's far enough from the last one
+                if (distance >= minDistance) {
+                    optimized.push(currentPoint);
+                    lastPoint = currentPoint;
+                }
+            }
+            
+            // Always include the last point of the stroke
+            if (lastPoint !== points[points.length - 1]) {
+                optimized.push(points[points.length - 1]);
+            }
+            
+            return optimized;
+        }
+
+        // Update status and plotter head position every second
+        setInterval(async () => {
+            await updateStatus();
+            const position = await getCurrentPosition();
+            if (position) {
+                updatePlotterPosition(position.x, position.y, position.penUp);
+            }
+        }, 1000);
+
+        async function getCurrentPosition() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                return {
+                    x: data.current_position[0],
+                    y: data.current_position[1],
+                    penUp: data.pen_up
+                };
+            } catch (error) {
+                console.error('Error fetching position:', error);
+                return lastPlotterPosition;
+            }
+        }
+
+        // Function to update plotter position based on machine feedback
+        async function updatePlotterPosition(x, y, penUp) {
+            const newPosition = { x, y, penUp };
+            
+            // Only add position if it's different from the last one
+            if (!lastPlotterPosition || 
+                lastPlotterPosition.x !== x || 
+                lastPlotterPosition.y !== y || 
+                lastPlotterPosition.penUp !== penUp) {
+                
+                plotterPath.push(newPosition);
+                lastPlotterPosition = newPosition;
+                
+                // Keep only the last 1000 positions to prevent memory issues
+                if (plotterPath.length > 1000) {
+                    plotterPath.shift();
+                }
+                
+                redrawCanvas();
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                // Update connection status
+                const connectionStatus = document.getElementById('connection-status');
+                connectionStatus.textContent = data.connected ? 'Connected' : 'Disconnected (Debug Mode)';
+                connectionStatus.className = `status-value ${data.connected ? 'connected' : 'disconnected'}`;
+                
+                // Update current position and plotter tracking
+                document.getElementById('current-position').textContent = 
+                    `X: ${data.current_position[0].toFixed(2)}mm, Y: ${data.current_position[1].toFixed(2)}mm`;
+                
+                // Update plotter position with current pen state
+                updatePlotterPosition(
+                    data.current_position[0],
+                    data.current_position[1],
+                    data.pen_up
+                );
+                
+                // Update other status displays
+                document.getElementById('pen-state-display').textContent = data.pen_up ? 'Up' : 'Down';
+                document.getElementById('pen-state-display').className = 
+                    `status-value ${data.pen_up ? 'pen-up' : 'pen-down'}`;
+                
+                document.getElementById('motors-state-display').textContent = data.motors_on ? 'On' : 'Off';
+                document.getElementById('motors-state-display').className = 
+                    `status-value ${data.motors_on ? 'connected' : 'disconnected'}`;
+                
+                document.getElementById('speed-display').textContent = `${data.speed_down} mm/min`;
+                document.getElementById('paper-size-display').textContent = data.paper_size.replace('_', ' ');
+                document.getElementById('steps-per-mm-display').textContent = `${data.steps_per_mm} steps/mm`;
+                document.getElementById('pen-up-angle-display').textContent = `${data.pen_up_angle}°`;
+                document.getElementById('pen-down-angle-display').textContent = `${data.pen_down_angle}°`;
+                document.getElementById('pen-up-delay-display').textContent = `${data.pen_up_delay} ms`;
+                document.getElementById('pen-down-delay-display').textContent = `${data.pen_down_delay} ms`;
+            } catch (error) {
+                console.error('Error updating status:', error);
+                document.getElementById('connection-status').textContent = 'Error';
+                document.getElementById('connection-status').className = 'status-value error';
+            }
+        }
+
+        async function moveToPosition() {
+            const x = parseFloat(document.getElementById('x').value);
+            const y = parseFloat(document.getElementById('y').value);
+            const penUp = document.getElementById('pen-up').value === 'true';
+            
+            if (isNaN(x) || isNaN(y)) {
+                showNotification('Please enter valid X and Y coordinates', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        x: x,
+                        y: y,
+                        pen_up: penUp
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    updatePlotterPosition(x, y, penUp);
+                    showNotification('Movement completed', 'success');
+                } else {
+                    showNotification(data.detail || 'Movement failed', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to send movement command', 'error');
+            }
+        }
+
+        async function homeMachine() {
+            try {
+                const response = await fetch('/home', { method: 'POST' });
+                const data = await response.json();
+                if (response.ok) {
+                    updatePlotterPosition(0, 0, true);  // Home position is (0,0) with pen up
+                    showNotification('Machine homed successfully', 'success');
+                } else {
+                    showNotification(data.detail || 'Failed to home machine', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to send home command', 'error');
+            }
+        }
+
+        async function togglePen() {
+            try {
+                const response = await fetch('/toggle_pen', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to toggle pen');
+                }
+                
+                const data = await response.json();
+                showNotification(`Pen ${data.pen_up ? 'raised' : 'lowered'}`, 'success');
+                
+                // Update the pen state display
+                document.getElementById('pen-state-display').textContent = data.pen_up ? 'Up' : 'Down';
+                document.getElementById('pen-state-display').className = 
+                    `status-value ${data.pen_up ? 'pen-up' : 'pen-down'}`;
+                
+                // Update the pen-up dropdown to match the current state
+                document.getElementById('pen-up').value = data.pen_up.toString();
+            } catch (error) {
+                console.error('Error toggling pen:', error);
+                showNotification('Failed to toggle pen', 'error');
+            }
+        }
+
+        async function toggleMotors() {
+            try {
+                const response = await fetch('/toggle_motors', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to toggle motors');
+                }
+                
+                const data = await response.json();
+                showNotification(`Motors ${data.motors_on ? 'turned on' : 'turned off'}`, 'success');
+            } catch (error) {
+                console.error('Error toggling motors:', error);
+                showNotification('Failed to toggle motors', 'error');
+            }
+        }
+
+        async function updateSettings() {
+            const stepsPerMm = parseInt(document.getElementById('steps-per-mm').value);
+            const speedUp = parseInt(document.getElementById('speed-up').value);
+            const speedDown = parseInt(document.getElementById('speed-down').value);
+            const penUpAngle = parseInt(document.getElementById('pen-up-angle').value);
+            const penDownAngle = parseInt(document.getElementById('pen-down-angle').value);
+            const penUpDelay = parseInt(document.getElementById('pen-up-delay').value);
+            const penDownDelay = parseInt(document.getElementById('pen-down-delay').value);
+            const paperSize = document.getElementById('paper-size').value;
+            
+            addConsoleLine('Updating settings...', 'command');
+            addConsoleLine(`Paper Size: ${paperSize}`, 'info');
+            addConsoleLine(`Steps per mm: ${stepsPerMm}, Speed Up: ${speedUp}, Speed Down: ${speedDown}`, 'info');
+            addConsoleLine(`Pen Up Angle: ${penUpAngle}, Pen Down Angle: ${penDownAngle}`, 'info');
+            addConsoleLine(`Pen Up Delay: ${penUpDelay}, Pen Down Delay: ${penDownDelay}`, 'info');
+            
+            try {
+                const response = await fetch('/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        steps_per_mm: stepsPerMm,
+                        speed_up: speedUp,
+                        speed_down: speedDown,
+                        pen_up_angle: penUpAngle,
+                        pen_down_angle: penDownAngle,
+                        pen_up_delay: penUpDelay,
+                        pen_down_delay: penDownDelay,
+                        paper_size: paperSize
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update settings');
+                }
+                
+                const data = await response.json();
+                
+                // Update canvas size based on new paper size
+                if (data.settings.bounds) {
+                    updateCanvasSize(data.settings.bounds.width, data.settings.bounds.height);
+                }
+                
+                addConsoleLine('Settings updated successfully', 'response');
+                showNotification('Settings updated', 'success');
+            } catch (error) {
+                console.error('Error updating settings:', error);
+                addConsoleLine(`Error updating settings: ${error.message}`, 'error');
+                showNotification('Failed to update settings', 'error');
+            }
+        }
+
+        async function shutdownServer() {
+            if (confirm('Are you sure you want to shutdown the server?')) {
+                try {
+                    const response = await fetch('/shutdown', {
+                        method: 'POST'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to shutdown server');
+                    }
+                    
+                    const data = await response.json();
+                    showNotification('Server shutting down...', 'info');
+                    
+                    // Close the browser window after a short delay
+                    setTimeout(() => {
+                        window.close();
+                    }, 1000);
+                } catch (error) {
+                    console.error('Error shutting down server:', error);
+                    showNotification('Failed to shutdown server', 'error');
+                }
+            }
+        }
+
+        async function resetSettings() {
+            try {
+                const response = await fetch('/reset_settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to reset settings');
+                }
+                
+                const data = await response.json();
+                
+                // Update UI with default settings
+                document.getElementById('steps-per-mm').value = data.settings.steps_per_mm;
+                document.getElementById('speed-up').value = data.settings.speed_up;
+                document.getElementById('speed-down').value = data.settings.speed_down;
+                document.getElementById('pen-up-angle').value = data.settings.pen_up_angle;
+                document.getElementById('pen-down-angle').value = data.settings.pen_down_angle;
+                document.getElementById('pen-up-delay').value = data.settings.pen_up_delay;
+                document.getElementById('pen-down-delay').value = data.settings.pen_down_delay;
+                
+                // Update paper size display
+                document.getElementById('paper-size').value = data.settings.paper_size;
+                document.getElementById('paper-size-display').textContent = data.settings.paper_size.replace('_', ' ');
+                
+                // Update canvas size based on paper size
+                updateCanvasSize(data.settings.bounds.width, data.settings.bounds.height);
+                
+                showNotification('Settings reset to defaults', 'success');
+            } catch (error) {
+                console.error('Error resetting settings:', error);
+                showNotification('Failed to reset settings', 'error');
+            }
+        }
+
+        // Initial status update
+        updateStatus();
+        
+        // Load settings from server when page loads
+        async function loadSettings() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                // Update UI with current settings from server
+                // Only update elements that exist in the DOM
+                const elementsToUpdate = {
+                    'steps-per-mm': data.steps_per_mm,
+                    'speed-up': data.speed_up,
+                    'speed-down': data.speed_down,
+                    'pen-up-angle': data.pen_up_angle,
+                    'pen-down-angle': data.pen_down_angle,
+                    'pen-up-delay': data.pen_up_delay,
+                    'pen-down-delay': data.pen_down_delay,
+                    'paper-size': data.paper_size
+                };
+                
+                // Safely update each element if it exists
+                Object.entries(elementsToUpdate).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = value;
+                    }
+                });
+                
+                // Update paper size display
+                const paperSizeDisplay = document.getElementById('paper-size-display');
+                if (paperSizeDisplay) {
+                    paperSizeDisplay.textContent = data.paper_size.replace('_', ' ');
+                }
+                
+                // Update canvas size based on bounds from server
+                if (data.bounds) {
+                    console.log('Updating canvas size with bounds:', data.bounds);
+                    updateCanvasSize(data.bounds.width, data.bounds.height);
+                } else {
+                    console.error('No bounds information received from server');
+                }
+                
+                console.log('Settings loaded from server');
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showNotification('Failed to load settings from server', 'error');
+            }
+        }
+        
+        // Call loadSettings when the page loads
+        document.addEventListener('DOMContentLoaded', loadSettings);
+
+        // Function to add a line to the console
+        function addConsoleLine(text, type = 'info') {
+            const consoleOutput = document.getElementById('console-output');
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.textContent = text;
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        // Function to update canvas size based on paper dimensions
+        function updateCanvasSize(width, height) {
+            // Set physical dimensions
+            canvas.width = width * CANVAS_SCALE;
+            canvas.height = height * CANVAS_SCALE;
+    
+            // Set display dimensions
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            
+            // Initialize canvas with scaling
+            const ctx = canvas.getContext('2d');
+            ctx.scale(CANVAS_SCALE, CANVAS_SCALE);
+            
+            // Update dimension labels
+            addDimensionLabels();
+            
+            // Redraw any existing strokes
+            redrawCanvas();
+        }
+
+        // Add WebSocket or polling for real-time updates
+        async function pollPlotterStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                if (response.ok) {
+                    updatePlotterPosition(
+                        data.current_position[0],
+                        data.current_position[1],
+                        data.pen_up
+                    );
+                }
+            } catch (error) {
+                console.error('Error polling status:', error);
+            }
+        }
+
+        // Function to add dimension labels to the canvas
+        function addDimensionLabels() {
+            const container = document.querySelector('.canvas-container');
+            if (!container) {
+                console.warn('Canvas container not found');
+                return;
+            }
+            
+            // Remove any existing dimension labels
+            // container.querySelectorAll('.canvas-dimensions, .tick-marks').forEach(el => el.remove());
+            
+            // // Add X dimension
+            // const xDimension = document.createElement('div');
+            // xDimension.className = 'canvas-dimensions dimension-x';
+            // xDimension.textContent = `${BED_WIDTH} mm`;
+            // container.appendChild(xDimension);
+            
+            // // Add Y dimension
+            // const yDimension = document.createElement('div');
+            // yDimension.className = 'canvas-dimensions dimension-y';
+            // yDimension.textContent = `${BED_HEIGHT} mm`;
+            // container.appendChild(yDimension);
+            
+            // Add tick marks
+            const tickInterval = 25; // 50mm intervals
+            
+            // X-axis ticks
+            for (let x = 0; x <= BED_WIDTH; x += tickInterval) {
+                if (x === 0) continue; // Skip 0
+                const tick = document.createElement('div');
+                tick.className = 'tick-marks tick-x';
+                tick.style.left = `${(x / BED_WIDTH * 100)}%`;
+                tick.textContent = x;
+                container.appendChild(tick);
+            }
+            
+            // Y-axis ticks
+            for (let y = 0; y <= BED_HEIGHT; y += tickInterval) {
+                if (y === 0) continue; // Skip 0
+                const tick = document.createElement('div');
+                tick.className = 'tick-marks tick-y';
+                tick.style.top = `${(y / BED_HEIGHT * 100)}%`;
+                tick.textContent = y;
+                container.appendChild(tick);
+            }
+        }
+
+        // Update updateCanvasSize to check for container
+        function updateCanvasSize(width, height) {
+            // Set physical dimensions
+            canvas.width = width * CANVAS_SCALE;
+            canvas.height = height * CANVAS_SCALE;
+            
+            // Set display dimensions
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            
+            // Initialize canvas with scaling
+            const ctx = canvas.getContext('2d');
+            ctx.scale(CANVAS_SCALE, CANVAS_SCALE);
+            
+            // Update dimension labels if container exists
+            const container = document.querySelector('.canvas-container');
+            if (container) {
+                addDimensionLabels();
+            }
+            
+            // Redraw any existing strokes
+            redrawCanvas();
+        }
+
+        // Update loadSettings to handle missing container
+        async function loadSettings() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                // Update UI with current settings from server
+                // Only update elements that exist in the DOM
+                const elementsToUpdate = {
+                    'steps-per-mm': data.steps_per_mm,
+                    'speed-up': data.speed_up,
+                    'speed-down': data.speed_down,
+                    'pen-up-angle': data.pen_up_angle,
+                    'pen-down-angle': data.pen_down_angle,
+                    'pen-up-delay': data.pen_up_delay,
+                    'pen-down-delay': data.pen_down_delay,
+                    'paper-size': data.paper_size
+                };
+                
+                // Safely update each element if it exists
+                Object.entries(elementsToUpdate).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = value;
+                    }
+                });
+                
+                // Update paper size display
+                const paperSizeDisplay = document.getElementById('paper-size-display');
+                if (paperSizeDisplay) {
+                    paperSizeDisplay.textContent = data.paper_size.replace('_', ' ');
+                }
+                
+                // Update canvas size based on bounds from server
+                if (data.bounds) {
+                    console.log('Updating canvas size with bounds:', data.bounds);
+                    updateCanvasSize(data.bounds.width, data.bounds.height);
+                } else {
+                    console.error('No bounds information received from server');
+                }
+                
+                console.log('Settings loaded from server');
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showNotification('Failed to load settings from server', 'error');
+            }
+        }
+
+        // Update the DOMContentLoaded event listener
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize the canvas
+            drawGrid();
+            
+            // Load settings (which will call addDimensionLabels if container exists)
+            loadSettings();
+            
+            // Start polling plotter position every 500ms
+            setInterval(pollPlotterStatus, 500);
+        });
+
+        // Add these variables to the existing script section
+        let bezierCanvas, bezierCtx;
+        let isBezierDrawing = false;
+        let bezierPoints = [];
+        let bezierControlPoints = [];
+        let currentBezierPath = [];
+        let completedBezierPaths = [];
+        let useJaggedPattern = false;
+        let jaggedAmplitude = 5;
+        let jaggedFrequency = 10;
+        let minControlPoints = 5;
+        let bezierMode = false;
+        
+        // Add this to the document.addEventListener('DOMContentLoaded', function() {...}) section
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing initialization code...
+            
+            // Initialize Bezier canvas
+            bezierCanvas = document.getElementById('bezierPreviewCanvas');
+            bezierCtx = bezierCanvas.getContext('2d');
+            
+            // Set up Bezier event listeners
+            bezierCanvas.addEventListener('mousedown', startBezierDrawing);
+            bezierCanvas.addEventListener('mousemove', drawBezier);
+            bezierCanvas.addEventListener('mouseup', endBezierDrawing);
+            bezierCanvas.addEventListener('mouseleave', endBezierDrawing);
+            
+            // Load jagged pattern settings
+            document.getElementById('jaggedAmplitude').value = jaggedAmplitude;
+            document.getElementById('jaggedFrequency').value = jaggedFrequency;
+            document.getElementById('minControlPoints').value = minControlPoints;
+        });
+        
+        function toggleBezierMode() {
+            bezierMode = !bezierMode;
+            const bezierSection = document.getElementById('bezierSection');
+            const bezierModeBtn = document.getElementById('bezierModeBtn');
+            
+            if (bezierMode) {
+                bezierSection.style.display = 'block';
+                bezierModeBtn.style.backgroundColor = '#FF5722';
+                bezierModeBtn.textContent = 'Exit Bezier Mode';
+                
+                // Clear the main canvas
+                clearCanvas();
+                
+                // Draw the Bezier preview canvas
+                drawBezierGrid();
+            } else {
+                bezierSection.style.display = 'none';
+                bezierModeBtn.style.backgroundColor = '#3498db';
+                bezierModeBtn.textContent = 'Bezier Mode';
+            }
+        }
+        
+        function drawBezierGrid() {
+            bezierCtx.clearRect(0, 0, bezierCanvas.width, bezierCanvas.height);
+            
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            const centerX = bezierCanvas.width / 2;
+            const centerY = bezierCanvas.height / 2;
+            
+            // Draw grid lines
+            bezierCtx.strokeStyle = '#EEEEEE';
+            bezierCtx.lineWidth = 0.5;
+            
+            // Vertical grid lines
+            for (let x = -20; x <= 20; x += 5) {
+                const xPos = centerX + x * scale;
+                bezierCtx.beginPath();
+                bezierCtx.moveTo(xPos, 0);
+                bezierCtx.lineTo(xPos, bezierCanvas.height);
+                bezierCtx.stroke();
+            }
+            
+            // Horizontal grid lines
+            for (let y = -20; y <= 20; y += 5) {
+                const yPos = centerY + y * scale;
+                bezierCtx.beginPath();
+                bezierCtx.moveTo(0, yPos);
+                bezierCtx.lineTo(bezierCanvas.width, yPos);
+                bezierCtx.stroke();
+            }
+            
+            // Draw center crosshair
+            bezierCtx.strokeStyle = '#000000';
+            bezierCtx.lineWidth = 1;
+            bezierCtx.beginPath();
+            bezierCtx.moveTo(centerX, 0);
+            bezierCtx.lineTo(centerX, bezierCanvas.height);
+            bezierCtx.moveTo(0, centerY);
+            bezierCtx.lineTo(bezierCanvas.width, centerY);
+            bezierCtx.stroke();
+            
+            // Draw mm markers
+            bezierCtx.font = '10px Arial';
+            bezierCtx.fillStyle = '#666666';
+            bezierCtx.textAlign = 'center';
+            bezierCtx.textBaseline = 'top';
+            
+            // X-axis markers
+            for (let x = -15; x <= 15; x += 5) {
+                if (x === 0) continue;
+                const xPos = centerX + x * scale;
+                bezierCtx.fillText(x.toString(), xPos, centerY + 5);
+            }
+            
+            // Y-axis markers
+            bezierCtx.textAlign = 'right';
+            bezierCtx.textBaseline = 'middle';
+            for (let y = -15; y <= 15; y += 5) {
+                if (y === 0) continue;
+                const yPos = centerY + y * scale;
+                bezierCtx.fillText(y.toString(), centerX - 5, yPos);
+            }
+        }
+        
+        function startBezierDrawing(e) {
+            isBezierDrawing = true;
+            const rect = bezierCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Convert to mm coordinates
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            const mmX = (x - bezierCanvas.width / 2) / scale;
+            const mmY = -(y - bezierCanvas.height / 2) / scale; // Invert Y axis
+            
+            bezierPoints = [{x: mmX, y: mmY}];
+            currentBezierPath = [{x: mmX, y: mmY}];
+            
+            // Clear and redraw
+            bezierCtx.clearRect(0, 0, bezierCanvas.width, bezierCanvas.height);
+            drawBezierGrid();
+            drawBezierPoint(mmX, mmY);
+        }
+        
+        function drawBezier(e) {
+            if (!isBezierDrawing) return;
+            
+            const rect = bezierCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Convert to mm coordinates
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            const mmX = (x - bezierCanvas.width / 2) / scale;
+            const mmY = -(y - bezierCanvas.height / 2) / scale; // Invert Y axis
+            
+            // Add point to current path
+            currentBezierPath.push({x: mmX, y: mmY});
+            
+            // Clear and redraw
+            bezierCtx.clearRect(0, 0, bezierCanvas.width, bezierCanvas.height);
+            drawBezierGrid();
+            
+            // Draw all completed paths
+            completedBezierPaths.forEach(pathData => {
+                drawBezierPath(pathData.path);
+                if (pathData.controls && pathData.controls.length > 0) {
+                    const oldControlPoints = bezierControlPoints;
+                    bezierControlPoints = pathData.controls;
+                    drawBezierCurve();
+                    bezierControlPoints = oldControlPoints;
+                }
+            });
+            
+            // Draw current path
+            drawBezierPath(currentBezierPath);
+            drawBezierPoint(mmX, mmY);
+            
+            // If we have enough points, create and show the Bezier curve
+            if (currentBezierPath.length > 2) {
+                createBezierCurve();
+                
+                // Show jagged pattern if enabled
+                if (useJaggedPattern) {
+                    const points = generateBezierPoints(bezierControlPoints);
+                    const jaggedPoints = applyJaggedPattern(points);
+                    drawJaggedPreview(jaggedPoints);
+                }
+            }
+        }
+        
+        function endBezierDrawing() {
+            if (!isBezierDrawing) return;
+            
+            isBezierDrawing = false;
+            
+            // If we have enough points, create a Bezier curve
+            if (currentBezierPath.length > 2) {
+                // Create control points for the Bezier curve
+                createBezierCurve();
+                
+                // Add current path to completed paths
+                completedBezierPaths.push({
+                    path: [...currentBezierPath],
+                    controls: [...bezierControlPoints]
+                });
+            }
+        }
+        
+        function createBezierCurve() {
+            if (currentBezierPath.length < 3) return;
+            
+            const start = currentBezierPath[0];
+            const end = currentBezierPath[currentBezierPath.length - 1];
+            
+            // Calculate path length
+            let pathLength = 0;
+            for (let i = 1; i < currentBezierPath.length; i++) {
+                const dx = currentBezierPath[i].x - currentBezierPath[i-1].x;
+                const dy = currentBezierPath[i].y - currentBezierPath[i-1].y;
+                pathLength += Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            // Determine number of control points based on path length
+            // Use minimum control points from settings, maximum 12
+            const numControlPoints = Math.max(minControlPoints, Math.min(12, Math.floor(pathLength / 15)));
+            
+            // Generate control points at regular intervals
+            bezierControlPoints = [start];
+            
+            // Calculate intermediate points
+            for (let i = 1; i < numControlPoints - 1; i++) {
+                const t = i / (numControlPoints - 1);
+                const index = Math.floor((currentBezierPath.length - 1) * t);
+                const nextIndex = Math.min(index + 1, currentBezierPath.length - 1);
+                const fraction = (currentBezierPath.length - 1) * t - index;
+                
+                // Interpolate between points for smoother control points
+                const p1 = currentBezierPath[index];
+                const p2 = currentBezierPath[nextIndex];
+                bezierControlPoints.push({
+                    x: p1.x + (p2.x - p1.x) * fraction,
+                    y: p1.y + (p2.y - p1.y) * fraction
+                });
+            }
+            
+            bezierControlPoints.push(end);
+            
+            // Draw the Bezier curve
+            drawBezierCurve();
+        }
+        
+        function drawBezierCurve() {
+            if (bezierControlPoints.length < 2) return;
+            
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            
+            bezierCtx.beginPath();
+            bezierControlPoints.forEach((point, index) => {
+                const canvasX = bezierCanvas.width / 2 + point.x * scale;
+                const canvasY = bezierCanvas.height / 2 - point.y * scale; // Invert Y axis
+                
+                if (index === 0) {
+                    bezierCtx.moveTo(canvasX, canvasY);
+                } else if (bezierControlPoints.length === 2) {
+                    bezierCtx.lineTo(canvasX, canvasY);
+                } else if (bezierControlPoints.length === 3) {
+                    if (index === 2) {
+                        bezierCtx.quadraticCurveTo(
+                            bezierCanvas.width / 2 + bezierControlPoints[1].x * scale,
+                            bezierCanvas.height / 2 - bezierControlPoints[1].y * scale,
+                            canvasX,
+                            canvasY
+                        );
+                    }
+                } else if (index % 3 === 0 && index > 0) {
+                    bezierCtx.bezierCurveTo(
+                        bezierCanvas.width / 2 + bezierControlPoints[index-2].x * scale,
+                        bezierCanvas.height / 2 - bezierControlPoints[index-2].y * scale,
+                        bezierCanvas.width / 2 + bezierControlPoints[index-1].x * scale,
+                        bezierCanvas.height / 2 - bezierControlPoints[index-1].y * scale,
+                        canvasX,
+                        canvasY
+                    );
+                }
+            });
+            
+            bezierCtx.strokeStyle = '#FF0000';
+            bezierCtx.lineWidth = 2;
+            bezierCtx.stroke();
+            
+            // Draw control points
+            bezierControlPoints.forEach(point => {
+                drawBezierPoint(point.x, point.y, '#0000FF');
+            });
+        }
+        
+        function drawBezierPath(path) {
+            if (path.length < 2) return;
+            
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            
+            bezierCtx.beginPath();
+            path.forEach((point, index) => {
+                const canvasX = bezierCanvas.width / 2 + point.x * scale;
+                const canvasY = bezierCanvas.height / 2 - point.y * scale; // Invert Y axis
+                
+                if (index === 0) {
+                    bezierCtx.moveTo(canvasX, canvasY);
+                } else {
+                    bezierCtx.lineTo(canvasX, canvasY);
+                }
+            });
+            
+            bezierCtx.strokeStyle = '#000000';
+            bezierCtx.lineWidth = 1;
+            bezierCtx.stroke();
+        }
+        
+        function drawBezierPoint(x, y, color = '#FF0000') {
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            const canvasX = bezierCanvas.width / 2 + x * scale;
+            const canvasY = bezierCanvas.height / 2 - y * scale; // Invert Y axis
+            
+            bezierCtx.beginPath();
+            bezierCtx.arc(canvasX, canvasY, 3, 0, Math.PI * 2);
+            bezierCtx.fillStyle = color;
+            bezierCtx.fill();
+        }
+        
+        function drawJaggedPreview(points) {
+            if (points.length < 2) return;
+            
+            const scale = bezierCanvas.width / 40; // 40mm total width
+            
+            // Draw the jagged path
+            bezierCtx.beginPath();
+            points.forEach((point, index) => {
+                const canvasX = bezierCanvas.width / 2 + point.x * scale;
+                const canvasY = bezierCanvas.height / 2 - point.y * scale; // Invert Y axis
+                
+                if (index === 0) {
+                    bezierCtx.moveTo(canvasX, canvasY);
+                } else {
+                    bezierCtx.lineTo(canvasX, canvasY);
+                }
+            });
+            
+            bezierCtx.strokeStyle = '#FF9800';
+            bezierCtx.lineWidth = 1;
+            bezierCtx.stroke();
+            
+            // Draw small dots at the zigzag points
+            points.forEach(point => {
+                const canvasX = bezierCanvas.width / 2 + point.x * scale;
+                const canvasY = bezierCanvas.height / 2 - point.y * scale;
+                
+                bezierCtx.beginPath();
+                bezierCtx.arc(canvasX, canvasY, 1, 0, Math.PI * 2);
+                bezierCtx.fillStyle = '#FF9800';
+                bezierCtx.fill();
+            });
+        }
+        
+        function clearBezierCanvas() {
+            bezierCtx.clearRect(0, 0, bezierCanvas.width, bezierCanvas.height);
+            drawBezierGrid();
+            bezierPoints = [];
+            bezierControlPoints = [];
+            currentBezierPath = [];
+            completedBezierPaths = [];
+        }
+        
+        function toggleJaggedPattern() {
+            useJaggedPattern = !useJaggedPattern;
+            const btn = document.getElementById('toggleJaggedBtn');
+            
+            // Clear and redraw without changing canvas size
+            bezierCtx.clearRect(0, 0, bezierCanvas.width, bezierCanvas.height);
+            drawBezierGrid();
+            
+            if (useJaggedPattern) {
+                btn.style.backgroundColor = '#FF5722';
+                btn.textContent = 'Disable Jagged Pattern';
+                
+                // Update settings
+                jaggedAmplitude = parseFloat(document.getElementById('jaggedAmplitude').value);
+                jaggedFrequency = parseFloat(document.getElementById('jaggedFrequency').value);
+                
+                // Draw the current Bezier curve
+                if (bezierControlPoints.length > 0) {
+                    drawBezierCurve();
+                    // Generate points and apply jagged pattern
+                    const points = generateBezierPoints(bezierControlPoints);
+                    const jaggedPoints = applyJaggedPattern(points);
+                    drawJaggedPreview(jaggedPoints);
+                }
+            } else {
+                btn.style.backgroundColor = '#3498db';
+                btn.textContent = 'Enable Jagged Pattern';
+                
+                // Just redraw the current curve
+                if (bezierControlPoints.length > 0) {
+                    drawBezierCurve();
+                }
+            }
+        }
+        
+        function applyJaggedPattern(points) {
+            if (points.length < 2) return points;
+            
+            const jaggedPoints = [];
+            const amplitude = parseFloat(document.getElementById('jaggedAmplitude').value);
+            const frequency = Math.max(0.5, parseFloat(document.getElementById('jaggedFrequency').value)); // Prevent frequency from being too small
+            
+            // Add first point
+            jaggedPoints.push(points[0]);
+            
+            // Process each segment
+            for (let i = 1; i < points.length; i++) {
+                const p1 = points[i-1];
+                const p2 = points[i];
+                
+                // Calculate segment properties
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                
+                // Skip very short segments
+                if (length < frequency / 2) {
+                    jaggedPoints.push(p2);
+                    continue;
+                }
+                
+                // Calculate direction vector (normalized)
+                const dirX = dx / length;
+                const dirY = dy / length;
+                
+                // Calculate perpendicular vector (normalized)
+                const perpX = -dirY;
+                const perpY = dirX;
+                
+                // Calculate number of zigzags based on frequency
+                // Limit maximum points per segment to prevent memory issues
+                const maxPointsPerSegment = 100;
+                const numPoints = Math.min(maxPointsPerSegment, Math.ceil(length / frequency));
+                const actualFrequency = length / numPoints;
+                
+                // Add zigzag points
+                for (let j = 1; j < numPoints; j++) {
+                    const t = j / numPoints;
+                    const baseX = p1.x + dx * t;
+                    const baseY = p1.y + dy * t;
+                    
+                    // Alternate between positive and negative amplitude
+                    const currentAmplitude = amplitude * (j % 2 === 0 ? 1 : -1);
+                    
+                    jaggedPoints.push({
+                        x: baseX + perpX * currentAmplitude,
+                        y: baseY + perpY * currentAmplitude
+                    });
+                }
+            }
+            
+            // Add last point
+            jaggedPoints.push(points[points.length - 1]);
+            
+            return jaggedPoints;
+        }
+        
+        async function executeBezierPath() {
+            if (bezierControlPoints.length < 2) {
+                showNotification('Please draw a path first', 'error');
+                return;
+            }
+
+            try {
+                // Get current plotter position and settings
+                const response = await fetch('/status');
+                const status = await response.json();
+                const currentX = status.current_position[0];
+                const currentY = status.current_position[1];
+                const bounds = status.bounds;
+                const speedDown = status.speed_down || 4000; // Use global speed setting with fallback
+
+                // Check if the curve is small (less than 2mm total length)
+                let totalLength = 0;
+                for (let i = 1; i < bezierControlPoints.length; i++) {
+                    const dx = bezierControlPoints[i].x - bezierControlPoints[i-1].x;
+                    const dy = bezierControlPoints[i].y - bezierControlPoints[i-1].y;
+                    totalLength += Math.sqrt(dx * dx + dy * dy);
+                }
+
+                let pathPoints;
+                if (totalLength < 2) {
+                    // For small curves, just use start and end points
+                    pathPoints = [bezierControlPoints[0], bezierControlPoints[bezierControlPoints.length - 1]];
+                } else {
+                    // Convert Bezier curve to points for the plotter
+                    pathPoints = generateBezierPoints(bezierControlPoints);
+
+                    // Apply jagged pattern if enabled
+                    if (useJaggedPattern) {
+                        pathPoints = applyJaggedPattern(pathPoints);
+                    }
+                }
+
+                // Filter out invalid or too-close points and transform to absolute coordinates
+                const transformedPoints = pathPoints
+                    .filter((point, index, array) => {
+                        if (index === 0) return true;
+                        const prevPoint = array[index - 1];
+                        const dx = point.x - prevPoint.x;
+                        const dy = point.y - prevPoint.y;
+                        return Math.sqrt(dx * dx + dy * dy) >= 0.1; // Points must be at least 0.1mm apart
+                    })
+                    .map(point => {
+                        const x = currentX + point.x;
+                        const y = currentY + point.y;
+                        // Ensure points are within bounds
+                        return {
+                            x: Math.max(0, Math.min(x, bounds.width)),
+                            y: Math.max(0, Math.min(y, bounds.height))
+                        };
+                    });
+
+                // Validate we have enough points
+                if (transformedPoints.length < 2) {
+                    throw new Error('Not enough valid points to create path');
+                }
+
+                // Send to plotter with pen up at the end
+                const moveResponse = await fetch('/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        points: transformedPoints,
+                        pen_up: true, // This ensures pen goes up after the stroke
+                        speed: speedDown
+                    })
+                });
+
+                if (!moveResponse.ok) {
+                    const errorData = await moveResponse.json();
+                    throw new Error(errorData.detail || 'Failed to send path to plotter');
+                }
+
+                // Add the path to the main canvas strokes
+                strokes.push({
+                    points: transformedPoints,
+                    color: '#000000',
+                    width: 1
+                });
+                redrawCanvas();
+
+                // Ensure pen is up with a separate command
+                await fetch('/toggle_pen', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                // Clear Bezier canvas
+                clearBezierCanvas();
+                
+                // Exit Bezier mode and update UI
+                bezierMode = false;
+                const bezierSection = document.getElementById('bezierSection');
+                const bezierModeBtn = document.getElementById('bezierModeBtn');
+                bezierSection.style.display = 'none';
+                bezierModeBtn.style.backgroundColor = '#3498db';
+                bezierModeBtn.textContent = 'Bezier Mode';
+
+                showNotification('Path executed successfully', 'success');
+            } catch (error) {
+                console.error('Error executing path:', error);
+                showNotification('Failed to execute path: ' + error.message, 'error');
+            }
+        }
+        
+        function generateBezierPoints(controlPoints, numPoints = 100) {
+            if (controlPoints.length < 2) return [];
+            
+            const points = [];
+            
+            // For a simple line
+            if (controlPoints.length === 2) {
+                const p0 = controlPoints[0];
+                const p1 = controlPoints[1];
+                
+                for (let t = 0; t <= 1; t += 1/numPoints) {
+                    points.push({
+                        x: p0.x + (p1.x - p0.x) * t,
+                        y: p0.y + (p1.y - p0.y) * t
+                    });
+                }
+            }
+            // For a quadratic curve
+            else if (controlPoints.length === 3) {
+                const p0 = controlPoints[0];
+                const p1 = controlPoints[1];
+                const p2 = controlPoints[2];
+                
+                for (let t = 0; t <= 1; t += 1/numPoints) {
+                    const t2 = t * t;
+                    const mt = 1 - t;
+                    const mt2 = mt * mt;
+                    
+                    points.push({
+                        x: mt2 * p0.x + 2 * mt * t * p1.x + t2 * p2.x,
+                        y: mt2 * p0.y + 2 * mt * t * p1.y + t2 * p2.y
+                    });
+                }
+            }
+            // For a cubic curve
+            else {
+                for (let i = 0; i < controlPoints.length - 3; i += 3) {
+                    const p0 = controlPoints[i];
+                    const p1 = controlPoints[i + 1];
+                    const p2 = controlPoints[i + 2];
+                    const p3 = controlPoints[i + 3];
+                    
+                    for (let t = 0; t <= 1; t += 1/numPoints) {
+                        const t2 = t * t;
+                        const t3 = t2 * t;
+                        const mt = 1 - t;
+                        const mt2 = mt * mt;
+                        const mt3 = mt2 * mt;
+                        
+                        points.push({
+                            x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+                            y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y
+                        });
+                    }
+                }
+            }
+            
+            // Add the last point
+            points.push(controlPoints[controlPoints.length - 1]);
+            
+            // Remove duplicate points that are too close
+            return points.filter((point, index, array) => {
+                if (index === 0) return true;
+                const prevPoint = array[index - 1];
+                const dx = point.x - prevPoint.x;
+                const dy = point.y - prevPoint.y;
+                return (dx * dx + dy * dy) > 0.01; // Points must be at least 0.1mm apart
+            });
+        }
+
+        // Add event listeners for parameter changes
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing initialization code...
+            
+            // Add event listeners for parameter changes
+            ['jaggedAmplitude', 'jaggedFrequency', 'minControlPoints'].forEach(id => {
+                document.getElementById(id).addEventListener('input', function() {
+                    if (id === 'minControlPoints') {
+                        minControlPoints = parseInt(this.value);
+                        if (currentBezierPath.length > 2) {
+                            createBezierCurve();
+                        }
+                    }
+                    
+                    // Update the preview if we have a curve
+                    if (bezierControlPoints.length > 0) {
+                        // Clear and redraw
+                        bezierCtx.clearRect(0, 0, bezierCanvas.width, bezierCanvas.height);
+                        drawBezierGrid();
+                        
+                        // Draw the Bezier curve
+                        drawBezierCurve();
+                        
+                        // Show jagged pattern if enabled
+                        if (useJaggedPattern) {
+                            const points = generateBezierPoints(bezierControlPoints);
+                            const jaggedPoints = applyJaggedPattern(points);
+                            drawJaggedPreview(jaggedPoints);
+                        }
+                    }
+                });
+            });
+        });
+
+        // Add this new function for copying current position
+        async function copyCurrentPosition() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                document.getElementById('x').value = data.current_position[0].toFixed(2);
+                document.getElementById('y').value = data.current_position[1].toFixed(2);
+                
+                showNotification('Current position copied', 'success');
+            } catch (error) {
+                console.error('Error copying position:', error);
+                showNotification('Failed to copy position', 'error');
+            }
+        }
+    </script>
+</body>
+</html> 
