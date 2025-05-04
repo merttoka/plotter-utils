@@ -70,6 +70,9 @@ The web interface provides:
 
 
 ### OSM Composer Tab
+```
+http://localhost:8000/static/osm_download.html
+```
 - Compose an SVG with map features like roads, shorelines, etc.
   - *Note: Select and extend on the map and add consecutive features without moving this rectangle.*
   - Select extent from OSM, select lines options, add to canvas.
