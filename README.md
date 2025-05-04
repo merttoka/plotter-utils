@@ -4,6 +4,8 @@ This is a Python server that provides a REST API interface to control an AxiDraw
 
 It also contains map utility that lets you download features like roads, shorelines, etc. as SVG. 
 
+![Interfaces](public/interfaces.png)
+
 ## Setup
 
 1. Create and activate a virtual environment:
